@@ -1,0 +1,44 @@
+{
+  "name": "匯率尺",
+  "short_name": "匯率尺",
+  "description": "雙刻度匯率比例尺 - 支援離線使用",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "TWD → KRW",
+      "short_name": "TWD/KRW",
+      "description": "台幣兌韓元",
+      "url": "?base=TWD&target=KRW",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "USD → TWD",
+      "short_name": "USD/TWD",
+      "description": "美金兌台幣",
+      "url": "?base=USD&target=TWD",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["finance", "utilities"],
+  "lang": "zh-TW"
+}

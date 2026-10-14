@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="description" content="匯率比例尺 - 雙刻度匯率換算工具">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="匯率尺">
+  <title>匯率尺</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <h1>匯率尺</h1>
+    <button class="btn-icon" id="infoBtn" aria-label="說明">ℹ️</button>
+  </header>
+
+  <main class="main">
+    <section class="controls" id="controls">
+      <div class="control-group">
+        <label for="baseCurrency">基準幣</label>
+        <select id="baseCurrency">
+          <option value="TWD">TWD 台幣</option>
+          <option value="USD">USD 美金</option>
+          <option value="JPY">JPY 日圓</option>
+          <option value="KRW">KRW 韓元</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="targetCurrency">目標幣</label>
+        <select id="targetCurrency">
+          <option value="TWD">TWD 台幣</option>
+          <option value="USD">USD 美金</option>
+          <option value="JPY">JPY 日圓</option>
+          <option value="KRW" selected>KRW 韓元</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="rate">匯率 (1 基準 = ? 目標)</label>
+        <div class="rate-input-wrapper">
+          <input type="number" id="rate" step="0.0001" min="0.0001" placeholder="載入中...">
+          <button type="button" class="btn-sync" id="syncRateBtn" aria-label="同步即時匯率">🔄</button>
+        </div>
+        <span class="rate-status" id="rateStatus"></span>
+      </div>
+
+      <div class="control-group">
+        <label for="maxBase">基準幣最大值</label>
+        <input type="number" id="maxBase" value="2000" min="100" step="100">
+      </div>
+
+      <div class="control-group checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="verticalMode">
+          <span class="checkmark"></span>
+          垂直模式
+        </label>
+      </div>
+    </section>
+
+    <section class="ruler-container" id="rulerContainer">
+      <svg id="rulerSvg" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" role="img" aria-label="匯率比例尺"></svg>
+    </section>
+  </main>
+
+  <dialog id="infoDialog" class="dialog">
+    <div class="dialog-content">
+      <h2>使用說明</h2>
+      <ul>
+        <li>選擇基準幣與目標幣，系統會自動抓取即時匯率</li>
+        <li>可手動修改匯率，修改後點擊 🔄 可恢復自動同步</li>
+        <li>調整基準幣最大值以改變刻度範圍</li>
+        <li>勾選「垂直模式」可將尺規旋轉 90°，適合直向螢幕</li>
+        <li>支援離線使用 (PWA)，請先在線上開啟一次</li>
+      </ul>
+      <button class="btn-primary" id="closeDialog">關閉</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js', { scope: './' })
+        .then(reg => {
+          console.log('SW registered:', reg.scope);
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('New version available, reload to update');
+              }
+            });
+          });
+        })
+        .catch(console.error);
+
+      // Listen for controller change to auto-reload
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+    }
+  </script>
+</body>
+</html>
