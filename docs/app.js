@@ -22,7 +22,7 @@ const state = {
   target: 'KRW',
   rate: 36,
   maxBase: 2000,
-  vertical: false,
+  vertical: true,
   manualRate: false
 };
 
@@ -31,7 +31,6 @@ const els = {
   targetCurrency: null,
   rate: null,
   maxBase: null,
-  verticalMode: null,
   syncRateBtn: null,
   rateStatus: null,
   rulerContainer: null,
@@ -120,6 +119,8 @@ function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     Object.assign(state, saved);
+    // The PWA is designed for portrait phones, so vertical mode is always on.
+    state.vertical = true;
     if (!CURRENCIES.includes(state.base)) state.base = 'TWD';
     if (!CURRENCIES.includes(state.target)) state.target = 'KRW';
     if (state.base === state.target) state.target = state.base === 'TWD' ? 'KRW' : 'TWD';
@@ -138,18 +139,11 @@ function renderRuler() {
   const { base, target, rate, maxBase, vertical } = state;
   const maxTarget = maxBase * rate;
 
-  const config = { width: 800, height: 200, vertical };
-  const marginLeft = 60, marginRight = 60, marginTop = 50, marginBottom = 50;
-  const rulerHeight = 60;
-
-  let canvasWidth = config.width + marginLeft + marginRight;
-  let canvasHeight = marginTop + rulerHeight + marginBottom;
-
-  if (vertical) {
-    marginTop += 40;
-    marginBottom += 20;
-    canvasHeight = marginTop + rulerHeight + marginBottom;
-  }
+  const canvasWidth = vertical ? 360 : 920;
+  const canvasHeight = vertical ? 720 : 160;
+  const rulerLength = vertical ? 600 : 800;
+  const rulerStart = vertical ? 60 : 60;
+  const axisCenter = vertical ? canvasWidth / 2 : 50 + 30;
 
   svg.setAttribute('viewBox', `0 0 ${canvasWidth} ${canvasHeight}`);
   container.classList.toggle('vertical', vertical);
@@ -162,15 +156,13 @@ function renderRuler() {
   bg.setAttribute('fill', 'white');
   svg.appendChild(bg);
 
-  const xOffset = marginLeft;
-  const yCenter = marginTop + rulerHeight / 2;
-  const scaleFactor = config.width / maxTarget;
+  const scaleFactor = rulerLength / maxTarget;
 
   const axis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  axis.setAttribute('x1', xOffset);
-  axis.setAttribute('y1', yCenter);
-  axis.setAttribute('x2', xOffset + config.width);
-  axis.setAttribute('y2', yCenter);
+  axis.setAttribute('x1', vertical ? axisCenter : rulerStart);
+  axis.setAttribute('y1', vertical ? rulerStart : axisCenter);
+  axis.setAttribute('x2', vertical ? axisCenter : rulerStart + rulerLength);
+  axis.setAttribute('y2', vertical ? rulerStart + rulerLength : axisCenter);
   axis.setAttribute('stroke', 'black');
   axis.setAttribute('stroke-width', '2');
   svg.appendChild(axis);
@@ -178,105 +170,98 @@ function renderRuler() {
   const baseScale = computeScale(maxBase);
   const targetScale = computeScale(maxTarget);
 
-  drawScale(svg, xOffset, yCenter, scaleFactor, baseScale, rate, maxTarget, 'down', 10, base);
-  drawScale(svg, xOffset, yCenter, scaleFactor, targetScale, 1, maxTarget, 'up', -10, target);
+  drawScale(svg, axisCenter, rulerStart, rulerLength, scaleFactor, baseScale, rate, maxTarget, 'down', 10, vertical);
+  drawScale(svg, axisCenter, rulerStart, rulerLength, scaleFactor, targetScale, 1, maxTarget, 'up', -10, vertical);
 
-  drawCurrencyLabels(svg, xOffset, yCenter, base, target, vertical);
-  drawTitle(svg, canvasWidth, marginTop, base, target, rate, vertical);
+  drawCurrencyLabels(svg, axisCenter, rulerStart, rulerLength, base, target, vertical);
+  drawTitle(svg, canvasWidth, canvasHeight, base, target, rate, vertical);
 }
 
-function drawScale(svg, xOffset, yCenter, scaleFactor, scale, rateMult, maxTarget, direction, labelOffset, currency) {
+function drawScale(svg, axisCenter, rulerStart, rulerLength, scaleFactor, scale, rateMult, maxTarget, direction, labelOffset, vertical) {
   const sign = direction === 'down' ? 1 : -1;
   const tickLen = 15;
   const minorTickLen = 8;
-  const tickRotation = state.vertical ? -90 : 0;
+  const tickRotation = vertical ? -90 : 0;
 
   scale.ticks.forEach(tick => {
-    const xPos = tick * rateMult * scaleFactor;
-    if (xPos > scaleFactor * maxTarget / rateMult * rateMult) return;
-
-    const x = xOffset + xPos;
+    const position = tick * rateMult * scaleFactor;
+    if (position > rulerLength) return;
+    const x = vertical ? axisCenter : rulerStart + position;
+    const y = vertical ? rulerStart + position : axisCenter;
 
     const tickLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    tickLine.setAttribute('x1', x);
-    tickLine.setAttribute('y1', yCenter);
-    tickLine.setAttribute('x2', x);
-    tickLine.setAttribute('y2', yCenter + sign * tickLen);
+    tickLine.setAttribute('x1', vertical ? axisCenter : x);
+    tickLine.setAttribute('y1', vertical ? y : axisCenter);
+    tickLine.setAttribute('x2', vertical ? axisCenter + sign * tickLen : x);
+    tickLine.setAttribute('y2', vertical ? y : axisCenter + sign * tickLen);
     tickLine.setAttribute('stroke', 'black');
     tickLine.setAttribute('stroke-width', '1.5');
     svg.appendChild(tickLine);
 
-    const labelY = yCenter + sign * (tickLen + Math.abs(labelOffset));
+    const labelX = vertical ? axisCenter + sign * (tickLen + Math.abs(labelOffset)) : x;
+    const labelY = vertical ? y : axisCenter + sign * (tickLen + Math.abs(labelOffset));
     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    text.setAttribute('x', x);
+    text.setAttribute('x', labelX);
     text.setAttribute('y', labelY);
     text.setAttribute('font-size', '10');
     text.setAttribute('text-anchor', 'middle');
-    text.setAttribute('dominant-baseline', direction === 'down' ? 'auto' : 'alphabetic');
+    text.setAttribute('dominant-baseline', vertical ? 'middle' : direction === 'down' ? 'auto' : 'alphabetic');
     text.textContent = formatNumber(tick);
-    if (tickRotation) text.setAttribute('transform', `rotate(${tickRotation} ${x} ${labelY})`);
+    if (tickRotation) text.setAttribute('transform', `rotate(${tickRotation} ${labelX} ${labelY})`);
     svg.appendChild(text);
   });
 
   scale.minorTicks.forEach(tick => {
-    const xPos = tick * rateMult * scaleFactor;
-    if (xPos > scaleFactor * maxTarget / rateMult * rateMult) return;
-
-    const x = xOffset + xPos;
+    const position = tick * rateMult * scaleFactor;
+    if (position > rulerLength) return;
+    const x = vertical ? axisCenter : rulerStart + position;
+    const y = vertical ? rulerStart + position : axisCenter;
     const minorLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    minorLine.setAttribute('x1', x);
-    minorLine.setAttribute('y1', yCenter);
-    minorLine.setAttribute('x2', x);
-    minorLine.setAttribute('y2', yCenter + sign * minorTickLen);
+    minorLine.setAttribute('x1', vertical ? axisCenter : x);
+    minorLine.setAttribute('y1', vertical ? y : axisCenter);
+    minorLine.setAttribute('x2', vertical ? axisCenter + sign * minorTickLen : x);
+    minorLine.setAttribute('y2', vertical ? y : axisCenter + sign * minorTickLen);
     minorLine.setAttribute('stroke', 'black');
     minorLine.setAttribute('stroke-width', '0.8');
     svg.appendChild(minorLine);
   });
 }
 
-function drawCurrencyLabels(svg, xOffset, yCenter, base, target, vertical) {
-  const labelX = xOffset - 15;
-  let baseY, targetY;
-
+function drawCurrencyLabels(svg, axisCenter, rulerStart, rulerLength, base, target, vertical) {
   if (vertical) {
-    baseY = yCenter + 30;
-    targetY = yCenter - 30;
-  } else {
-    baseY = yCenter + 20;
-    targetY = yCenter - 20;
+    const labelY = rulerStart + rulerLength / 2;
+    addCurrencyLabel(svg, axisCenter + 42, labelY, base, true);
+    addCurrencyLabel(svg, axisCenter - 42, labelY, target, true);
+    return;
   }
 
-  const baseLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-  baseLabel.setAttribute('x', labelX);
-  baseLabel.setAttribute('y', baseY);
-  baseLabel.setAttribute('font-size', '14');
-  baseLabel.setAttribute('font-weight', 'bold');
-  baseLabel.setAttribute('text-anchor', 'end');
-  baseLabel.setAttribute('dominant-baseline', 'middle');
-  baseLabel.textContent = base;
-  if (vertical) baseLabel.setAttribute('transform', `rotate(-90 ${labelX} ${baseY})`);
-  svg.appendChild(baseLabel);
-
-  const targetLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-  targetLabel.setAttribute('x', labelX);
-  targetLabel.setAttribute('y', targetY);
-  targetLabel.setAttribute('font-size', '14');
-  targetLabel.setAttribute('font-weight', 'bold');
-  targetLabel.setAttribute('text-anchor', 'end');
-  targetLabel.setAttribute('dominant-baseline', 'middle');
-  targetLabel.textContent = target;
-  if (vertical) targetLabel.setAttribute('transform', `rotate(-90 ${labelX} ${targetY})`);
-  svg.appendChild(targetLabel);
+  const labelX = rulerStart - 15;
+  const yCenter = axisCenter;
+  addCurrencyLabel(svg, labelX, yCenter + 20, base, false);
+  addCurrencyLabel(svg, labelX, yCenter - 20, target, false);
 }
 
-function drawTitle(svg, canvasWidth, marginTop, base, target, rate, vertical) {
+function addCurrencyLabel(svg, x, y, currency, vertical) {
+  const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  label.setAttribute('x', x);
+  label.setAttribute('y', y);
+  label.setAttribute('font-size', '14');
+  label.setAttribute('font-weight', 'bold');
+  label.setAttribute('text-anchor', 'middle');
+  label.setAttribute('dominant-baseline', 'middle');
+  label.textContent = currency;
+  if (vertical) label.setAttribute('transform', `rotate(-90 ${x} ${y})`);
+  svg.appendChild(label);
+}
+
+function drawTitle(svg, canvasWidth, canvasHeight, base, target, rate, vertical) {
   let titleY, subtitleY;
   if (vertical) {
-    titleY = marginTop - 40;
-    subtitleY = marginTop - 22;
+    titleY = 22;
+    subtitleY = 40;
   } else {
-    titleY = marginTop - 25;
-    subtitleY = marginTop - 10;
+    titleY = 25;
+    subtitleY = 42;
   }
 
   const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -381,18 +366,11 @@ function onMaxBaseChange() {
   }
 }
 
-function onVerticalChange() {
-  state.vertical = els.verticalMode.checked;
-  renderRuler();
-  saveState();
-}
-
 function initElements() {
   els.baseCurrency = document.getElementById('baseCurrency');
   els.targetCurrency = document.getElementById('targetCurrency');
   els.rate = document.getElementById('rate');
   els.maxBase = document.getElementById('maxBase');
-  els.verticalMode = document.getElementById('verticalMode');
   els.syncRateBtn = document.getElementById('syncRateBtn');
   els.rateStatus = document.getElementById('rateStatus');
   els.rulerContainer = document.getElementById('rulerContainer');
@@ -414,7 +392,6 @@ function bindEvents() {
     }
   });
   els.maxBase.addEventListener('change', onMaxBaseChange);
-  els.verticalMode.addEventListener('change', onVerticalChange);
   els.syncRateBtn.addEventListener('click', syncRate);
   els.infoBtn.addEventListener('click', () => els.infoDialog.showModal());
   els.closeDialog.addEventListener('click', () => els.infoDialog.close());
@@ -427,7 +404,6 @@ function applyState() {
   els.baseCurrency.value = state.base;
   els.targetCurrency.value = state.target;
   els.maxBase.value = state.maxBase;
-  els.verticalMode.checked = state.vertical;
   if (state.manualRate) {
     els.rateStatus.textContent = '手動模式 - 點擊 🔄 恢復自動';
     els.rateStatus.classList.add('manual');

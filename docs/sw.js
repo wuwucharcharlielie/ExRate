@@ -1,4 +1,4 @@
-const CACHE_NAME = 'exrate-v2';
+const CACHE_NAME = 'exrate-v4';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -10,7 +10,7 @@ const STATIC_ASSETS = [
 ];
 
 const API_CACHE_NAME = 'exrate-api-v1';
-const API_URL_PATTERN = 'api.exchangerate.host';
+const API_URL_PATTERN = 'open.er-api.com';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
