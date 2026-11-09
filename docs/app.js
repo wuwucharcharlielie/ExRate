@@ -11,7 +11,9 @@ const FALLBACK_RATES = {
   'JPY-TWD': 0.21, 'JPY-USD': 0.0066, 'JPY-KRW': 9.3,
   'KRW-TWD': 0.023, 'KRW-USD': 0.00071, 'KRW-JPY': 0.11
 };
-const API_URL = 'https://api.exchangerate.host/latest';
+// exchangerate.host now requires an access key.  Use the public endpoint
+// instead; it returns the same `rates` shape and supports CORS.
+const API_URL = 'https://open.er-api.com/v6/latest';
 const STORAGE_KEY = 'exrate_state';
 const CACHE_KEY = 'exrate_rate_cache';
 
@@ -77,16 +79,22 @@ function formatNumber(n) {
 
 async function fetchRate(base, target) {
   try {
-    const res = await fetch(`${API_URL}?base=${base}&symbols=${target}`);
+    // Prevent the browser from serving an older successful response when the
+    // user explicitly requests a fresh rate.
+    const res = await fetch(
+      `${API_URL}/${encodeURIComponent(base)}?t=${Date.now()}`,
+      { cache: 'no-store' }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (data.rates && data.rates[target]) {
-      return data.rates[target];
+    const rate = data.rates && data.rates[target];
+    if (data.result === 'success' && Number.isFinite(rate) && rate > 0) {
+      return rate;
     }
   } catch (e) {
     console.warn('API fetch failed:', e);
   }
-  const key = `${base}-${target}`;
-  return FALLBACK_RATES[key] || 1;
+  return null;
 }
 
 function loadCachedRate(base, target) {
@@ -297,21 +305,30 @@ async function syncRate() {
   els.rateStatus.textContent = '同步中...';
   els.rateStatus.classList.remove('manual');
 
-  const cached = loadCachedRate(base, target);
-  let rate = cached;
+  // Always try the network first when the user explicitly synchronizes.
+  // Cache and the hardcoded value are only fallbacks for offline/API failure.
+  let rate = await fetchRate(base, target);
+  let source = 'live';
 
   if (!rate) {
-    rate = await fetchRate(base, target);
+    rate = loadCachedRate(base, target);
+    source = rate ? 'cache' : 'fallback';
+  }
+
+  if (!rate) {
+    rate = FALLBACK_RATES[`${base}-${target}`] || 1;
   }
 
   if (rate) {
     state.rate = rate;
     state.manualRate = false;
-    saveCachedRate(base, target, rate);
+    if (source === 'live') saveCachedRate(base, target, rate);
     els.rate.value = rate.toFixed(4);
-    els.rateStatus.textContent = '即時匯率已同步';
-  } else {
-    els.rateStatus.textContent = '同步失敗，使用預設值';
+    els.rateStatus.textContent = source === 'live'
+      ? '即時匯率已同步'
+      : source === 'cache'
+        ? '網路無法連線，使用快取匯率'
+        : '網路無法連線，使用備援匯率';
   }
 
   els.syncRateBtn.disabled = false;
