@@ -354,23 +354,28 @@ function onRateChange() {
   }
 }
 
-function onCurrencyChange() {
+function onCurrencyChange(event) {
   const newBase = els.baseCurrency.value;
   const newTarget = els.targetCurrency.value;
+  const previousBase = state.base;
+  const previousTarget = state.target;
 
   if (newBase === newTarget) {
-    const other = CURRENCIES.find(c => c !== newBase);
-    if (newBase === state.base) {
-      els.targetCurrency.value = other;
-      state.target = other;
+    // Selecting the other side's currency is a quick-swap gesture.
+    if (event.target === els.baseCurrency) {
+      state.base = newBase;
+      state.target = previousBase;
     } else {
-      els.baseCurrency.value = other;
-      state.base = other;
+      state.base = previousTarget;
+      state.target = newTarget;
     }
   } else {
     state.base = newBase;
     state.target = newTarget;
   }
+
+  els.baseCurrency.value = state.base;
+  els.targetCurrency.value = state.target;
 
   state.manualRate = false;
   syncRate();
