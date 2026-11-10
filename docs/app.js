@@ -199,7 +199,9 @@ function drawScale(svg, axisCenter, rulerStart, rulerLength, scaleFactor, scale,
   const sign = direction === 'down' ? 1 : -1;
   const tickLen = 15;
   const minorTickLen = 8;
-  const tickRotation = vertical ? -90 : 0;
+  // Keep labels horizontal in portrait mode so they can be read naturally
+  // while holding the phone upright.
+  const tickRotation = 0;
 
   scale.ticks.forEach(tick => {
     const position = tick * rateMult * scaleFactor;
@@ -216,7 +218,8 @@ function drawScale(svg, axisCenter, rulerStart, rulerLength, scaleFactor, scale,
     tickLine.setAttribute('stroke-width', '1.5');
     svg.appendChild(tickLine);
 
-    const labelX = vertical ? axisCenter + sign * (tickLen + Math.abs(labelOffset)) : x;
+    const labelDistance = vertical ? 28 : Math.abs(labelOffset);
+    const labelX = vertical ? axisCenter + sign * (tickLen + labelDistance) : x;
     const labelY = vertical ? y : axisCenter + sign * (tickLen + Math.abs(labelOffset));
     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     text.setAttribute('x', labelX);
@@ -248,8 +251,8 @@ function drawScale(svg, axisCenter, rulerStart, rulerLength, scaleFactor, scale,
 function drawCurrencyLabels(svg, axisCenter, rulerStart, rulerLength, base, target, vertical) {
   if (vertical) {
     const labelY = rulerStart + rulerLength / 2;
-    addCurrencyLabel(svg, axisCenter + 42, labelY, base, true);
-    addCurrencyLabel(svg, axisCenter - 42, labelY, target, true);
+    addCurrencyLabel(svg, axisCenter + 93, labelY, base, true);
+    addCurrencyLabel(svg, axisCenter - 93, labelY, target, true);
     return;
   }
 
@@ -268,7 +271,6 @@ function addCurrencyLabel(svg, x, y, currency, vertical) {
   label.setAttribute('text-anchor', 'middle');
   label.setAttribute('dominant-baseline', 'middle');
   label.textContent = currency;
-  if (vertical) label.setAttribute('transform', `rotate(-90 ${x} ${y})`);
   svg.appendChild(label);
 }
 
