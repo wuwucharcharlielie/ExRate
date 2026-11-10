@@ -171,7 +171,7 @@ function renderRuler() {
   const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
   bg.setAttribute('width', '100%');
   bg.setAttribute('height', '100%');
-  bg.setAttribute('fill', 'white');
+  bg.setAttribute('fill', 'var(--surface)');
   svg.appendChild(bg);
 
   const scaleFactor = rulerLength / maxTarget;
