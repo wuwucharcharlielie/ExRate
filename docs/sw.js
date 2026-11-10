@@ -1,4 +1,4 @@
-const CACHE_NAME = 'exrate-v12';
+const CACHE_NAME = 'exrate-v14';
 const STATIC_ASSETS = [
   './',
   './index.html',

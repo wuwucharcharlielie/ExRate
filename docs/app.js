@@ -190,9 +190,44 @@ function renderRuler() {
 
   drawScale(svg, axisCenter, rulerStart, rulerLength, scaleFactor, baseScale, rate, maxTarget, 'down', 10, vertical);
   drawScale(svg, axisCenter, rulerStart, rulerLength, scaleFactor, targetScale, 1, maxTarget, 'up', -10, vertical);
+  drawEndpointLabel(svg, axisCenter, rulerStart, rulerLength, scaleFactor, maxTarget, vertical);
 
   drawCurrencyLabels(svg, axisCenter, rulerStart, rulerLength, base, target, vertical);
   drawTitle(svg, canvasWidth, canvasHeight, base, target, rate, vertical);
+}
+
+function drawEndpointLabel(svg, axisCenter, rulerStart, rulerLength, scaleFactor, value, vertical) {
+  const tickLen = 15;
+  const position = value * scaleFactor;
+  if (position < 0 || position > rulerLength) return;
+
+  const axisValue = vertical ? rulerStart + position : axisCenter;
+  const tickX1 = vertical ? axisCenter : rulerStart + position;
+  const tickY1 = vertical ? axisValue : axisCenter;
+  const tickX2 = vertical ? axisCenter - tickLen : tickX1;
+  const tickY2 = vertical ? axisValue : axisCenter - tickLen;
+  const color = '#9ca3af';
+
+  const endpointTick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  endpointTick.setAttribute('x1', tickX1);
+  endpointTick.setAttribute('y1', tickY1);
+  endpointTick.setAttribute('x2', tickX2);
+  endpointTick.setAttribute('y2', tickY2);
+  endpointTick.setAttribute('stroke', color);
+  endpointTick.setAttribute('stroke-width', '1.5');
+  svg.appendChild(endpointTick);
+
+  const labelX = vertical ? axisCenter - tickLen - 28 : rulerStart + position;
+  const labelY = vertical ? axisValue : axisCenter - tickLen - 10;
+  const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  label.setAttribute('x', labelX);
+  label.setAttribute('y', labelY);
+  label.setAttribute('font-size', '10');
+  label.setAttribute('fill', color);
+  label.setAttribute('text-anchor', 'middle');
+  label.setAttribute('dominant-baseline', vertical ? 'middle' : 'alphabetic');
+  label.textContent = formatNumber(value);
+  svg.appendChild(label);
 }
 
 function drawScale(svg, axisCenter, rulerStart, rulerLength, scaleFactor, scale, rateMult, maxTarget, direction, labelOffset, vertical) {
