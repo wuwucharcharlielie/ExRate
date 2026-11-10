@@ -23,6 +23,7 @@ const state = {
   rate: 36,
   maxBase: 2000,
   vertical: true,
+  controlsCollapsed: false,
   manualRate: false
 };
 
@@ -31,6 +32,9 @@ const els = {
   targetCurrency: null,
   rate: null,
   maxBase: null,
+  controls: null,
+  controlsToggle: null,
+  controlFields: null,
   syncRateBtn: null,
   rateStatus: null,
   rulerContainer: null,
@@ -131,6 +135,19 @@ function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {}
+}
+
+function setControlsCollapsed(collapsed) {
+  state.controlsCollapsed = collapsed;
+  els.controls.classList.toggle('collapsed', collapsed);
+  els.controlFields.hidden = collapsed;
+  els.controlsToggle.setAttribute('aria-expanded', String(!collapsed));
+  els.controlsToggle.textContent = collapsed ? '開啟設定⌄' : '收起設定⌃';
+}
+
+function toggleControls() {
+  setControlsCollapsed(!state.controlsCollapsed);
+  saveState();
 }
 
 function renderRuler() {
@@ -371,6 +388,9 @@ function initElements() {
   els.targetCurrency = document.getElementById('targetCurrency');
   els.rate = document.getElementById('rate');
   els.maxBase = document.getElementById('maxBase');
+  els.controls = document.getElementById('controls');
+  els.controlsToggle = document.getElementById('controlsToggle');
+  els.controlFields = document.getElementById('controlFields');
   els.syncRateBtn = document.getElementById('syncRateBtn');
   els.rateStatus = document.getElementById('rateStatus');
   els.rulerContainer = document.getElementById('rulerContainer');
@@ -392,6 +412,7 @@ function bindEvents() {
     }
   });
   els.maxBase.addEventListener('change', onMaxBaseChange);
+  els.controlsToggle.addEventListener('click', toggleControls);
   els.syncRateBtn.addEventListener('click', syncRate);
   els.infoBtn.addEventListener('click', () => els.infoDialog.showModal());
   els.closeDialog.addEventListener('click', () => els.infoDialog.close());
@@ -404,6 +425,7 @@ function applyState() {
   els.baseCurrency.value = state.base;
   els.targetCurrency.value = state.target;
   els.maxBase.value = state.maxBase;
+  setControlsCollapsed(state.controlsCollapsed);
   if (state.manualRate) {
     els.rateStatus.textContent = '手動模式 - 點擊 🔄 恢復自動';
     els.rateStatus.classList.add('manual');

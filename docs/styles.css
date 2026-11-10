@@ -71,6 +71,40 @@ body {
   margin-bottom: var(--spacing);
 }
 
+.controls-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  margin-bottom: 16px;
+}
+
+.controls-toggle {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: var(--surface);
+  color: var(--primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.controls-toggle:active {
+  background: var(--border);
+}
+
+.controls.collapsed {
+  padding-bottom: 10px;
+}
+
+.controls.collapsed .controls-header {
+  margin-bottom: 0;
+}
+
+.controls.collapsed #controlFields {
+  display: none;
+}
+
 .control-group {
   margin-bottom: 16px;
 }

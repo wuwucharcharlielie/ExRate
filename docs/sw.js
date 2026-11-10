@@ -1,9 +1,9 @@
-const CACHE_NAME = 'exrate-v4';
+const CACHE_NAME = 'exrate-v7';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './app.js',
-  './styles.css',
+  './app.js?v=5',
+  './styles.css?v=2',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
