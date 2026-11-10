@@ -19,18 +19,17 @@
 <body>
   <header class="header">
     <h1>匯率尺</h1>
-    <button class="btn-icon" id="infoBtn" aria-label="說明">ℹ️</button>
+    <div class="header-actions">
+      <button type="button" class="controls-toggle" id="controlsToggle"
+              aria-controls="controlFields" aria-expanded="true">
+        收起設定⌃
+      </button>
+      <button class="btn-icon" id="infoBtn" aria-label="說明">ℹ️</button>
+    </div>
   </header>
 
   <main class="main">
     <section class="controls" id="controls">
-      <div class="controls-header">
-        <strong>匯率設定</strong>
-        <button type="button" class="controls-toggle" id="controlsToggle"
-                aria-controls="controlFields" aria-expanded="true">
-          收起設定⌃
-        </button>
-      </div>
       <div id="controlFields">
       <div class="control-group">
         <label for="baseCurrency">基準幣</label>

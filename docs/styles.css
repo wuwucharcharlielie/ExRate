@@ -47,6 +47,12 @@ body {
   font-weight: 600;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .btn-icon {
   background: none;
   border: none;
@@ -94,11 +100,7 @@ body {
 }
 
 .controls.collapsed {
-  padding-bottom: 10px;
-}
-
-.controls.collapsed .controls-header {
-  margin-bottom: 0;
+  display: none;
 }
 
 .controls.collapsed #controlFields {

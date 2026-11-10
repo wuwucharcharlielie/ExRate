@@ -139,6 +139,7 @@ function saveState() {
 
 function setControlsCollapsed(collapsed) {
   state.controlsCollapsed = collapsed;
+  els.controls.hidden = collapsed;
   els.controls.classList.toggle('collapsed', collapsed);
   els.controlFields.hidden = collapsed;
   els.controlsToggle.setAttribute('aria-expanded', String(!collapsed));
